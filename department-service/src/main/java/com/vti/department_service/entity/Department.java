@@ -10,6 +10,7 @@ import java.util.Date;
 @Entity
 @Data
 @NoArgsConstructor
+@Table(name = "department")
 public class Department {
     @Id
     @Column(name = "id")
