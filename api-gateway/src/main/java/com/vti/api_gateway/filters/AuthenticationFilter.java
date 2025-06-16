@@ -7,11 +7,13 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+@Component
 @RequiredArgsConstructor
 public class AuthenticationFilter implements GatewayFilter {
 
@@ -19,8 +21,12 @@ public class AuthenticationFilter implements GatewayFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
+
         VerifyTokenResponse response = restClient.get()
-                .uri("http://auth-service/api/v1/auth/verify")
+                .uri("http://auth-service:8082/api/v1/auth/verify")
+                .header("Authorization", authHeader)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
 
