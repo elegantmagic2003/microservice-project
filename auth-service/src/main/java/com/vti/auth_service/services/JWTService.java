@@ -1,17 +1,27 @@
 package com.vti.auth_service.services;
 
 
+import com.vti.auth_service.entity.UserEntity;
+import com.vti.auth_service.repo.UserRepository;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
+@Service
+@RequiredArgsConstructor
 public class JWTService {
     @Value("${app.auth.tokenSecret}")
     private String secretKey;
@@ -21,6 +31,8 @@ public class JWTService {
 
     @Value("${app.auth.refreshTokenExpiration}")
     private long refreshExpiration;
+
+    private final UserRepository userRepository;
 
     public String generateAccessToken(UserDetails userDetails) {
         return buildToken(Map.of(), userDetails, expiration);
@@ -44,4 +56,46 @@ public class JWTService {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSignInKey(secretKey))
+                .build()
+                .parseClaimsJwt(token)
+                .getBody();
+    }
+
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public boolean validateToken(String token) {
+        if (isTokenExpired(token)) {
+            return false;
+        }
+
+        String username = extractUsername(token);
+
+        if (!StringUtils.hasText(username)) {
+            return false;
+        }
+
+        Optional<UserEntity> userEntity = userRepository.findByUsername(username);
+        return userEntity.isPresent();
+    }
+
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+
 }
