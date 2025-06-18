@@ -37,6 +37,7 @@ services:
     depends_on:
       - mysql
       - eureka-server
+      - config-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/microservice?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimeZone=UTC
       SPRING_DATASOURCE_USERNAME: dimsum
@@ -55,6 +56,7 @@ services:
     depends_on:
       - mysql
       - eureka-server
+      - config-service
     networks:
       - spring-microservice
     environment:
@@ -73,6 +75,7 @@ services:
       - "8762:8762"
     depends_on:
       - eureka-server
+      - config-service
     networks:
       - spring-microservice
     environment:
@@ -88,6 +91,7 @@ services:
     depends_on:
       - mysql
       - eureka-server
+      - config-service
     networks:
       - spring-microservice
     environment:
@@ -96,6 +100,34 @@ services:
       SPRING_DATASOURCE_PASSWORD: 123abc
       SPRING_APPLICATION_NAME: auth-service
 
+  config-service:
+    container_name: config-service
+    build:
+      context: ./config-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8763:8763"
+    depends_on:
+      - eureka-server
+    networks:
+      - spring-microservice
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  admin-service:
+    build:
+      context: ./admin-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    depends_on:
+      - eureka-server
+      - account-service
+      - department-service
+    networks:
+      - spring-microservice
 
 networks:
   spring-microservice:

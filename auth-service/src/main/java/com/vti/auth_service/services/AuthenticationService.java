@@ -107,7 +107,7 @@ public class AuthenticationService {
     }
 
     public LoginResponse refreshToken(String authHeader) {
-        if (!StringUtils.hasText(authHeader) || authHeader.startsWith("Bearer ")) {
+        if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
             return LoginResponse.builder()
                     .status(HttpStatus.UNAUTHORIZED.value())
                     .message("Invalid token!")
@@ -142,7 +142,7 @@ public class AuthenticationService {
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .refreshToken(newRefreshToken)
                 .userId(userEntity.getId())
                 .message("Refresh token successfully")
                 .status(HttpStatus.OK.value())
