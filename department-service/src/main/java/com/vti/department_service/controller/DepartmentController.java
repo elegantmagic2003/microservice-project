@@ -15,7 +15,7 @@ import java.util.List;
 public class DepartmentController {
     private final DepartmentService departmentService;
 
-    @GetMapping("/")
+    @GetMapping()
     public List<DepartmentDTO> getAllDepartments() {
         return departmentService.getAllDepartments();
     }
